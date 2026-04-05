@@ -1,0 +1,68 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── Node / React Native ───────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# ── Expo ──────────────────────────────────────────────────────────────────────
+.expo/
+expo-env.d.ts
+
+# ── Variáveis de ambiente ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!back/.env.example
+!mobile/.env.example
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ── Banco de dados ────────────────────────────────────────────────────────────
+*.sqlite
+*.db
+
+# ── Editors / IDEs ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
