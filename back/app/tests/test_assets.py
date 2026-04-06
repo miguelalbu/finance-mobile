@@ -84,6 +84,18 @@ def test_delete_asset(client: TestClient, auth_headers: dict):
     assert response.status_code == 404
 
 
+def test_create_duplicate_asset_returns_conflict(client: TestClient, auth_headers: dict):
+    client.post("/api/v1/assets", json={"symbol": "PETR4", "name": "Petrobras"}, headers=auth_headers)
+
+    response = client.post(
+        "/api/v1/assets",
+        json={"symbol": "petr4", "name": "Petrobras"},
+        headers=auth_headers,
+    )
+    assert response.status_code == 409
+    assert "favoritos" in response.json()["detail"].lower()
+
+
 def test_assets_isolated_between_users(client: TestClient):
     client.post("/api/v1/auth/register", json={"email": "user1@test.com", "password": "123456"})
     client.post("/api/v1/auth/register", json={"email": "user2@test.com", "password": "123456"})
