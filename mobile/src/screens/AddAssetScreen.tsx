@@ -53,8 +53,9 @@ export default function AddAssetScreen({ navigation }: Props) {
       await assetsApi.create(symbol.trim().toUpperCase(), name.trim());
       queryClient.invalidateQueries({ queryKey: ['assets'] });
       navigation.goBack();
-    } catch {
-      setError('Não foi possível adicionar o ativo. Tente novamente.');
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      setError(detail ?? 'Não foi possível adicionar o ativo. Tente novamente.');
     } finally {
       setLoading(false);
     }

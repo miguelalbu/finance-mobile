@@ -14,6 +14,9 @@ class AssetService:
     """
 
     def create(self, db: Session, data: AssetCreate, user_id: int) -> Asset:
+        existing = asset_repository.get_by_symbol_and_user(db, data.symbol, user_id)
+        if existing:
+            raise ValueError(f"{data.symbol.upper()} já está nos seus favoritos")
         asset = Asset(
             symbol=data.symbol.upper(),
             name=data.name,

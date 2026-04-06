@@ -17,7 +17,10 @@ def create_asset(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return asset_service.create(db, data, current_user.id)
+    try:
+        return asset_service.create(db, data, current_user.id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
 
 @router.get("", response_model=List[AssetResponse])

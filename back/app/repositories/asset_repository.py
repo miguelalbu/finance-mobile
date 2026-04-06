@@ -20,6 +20,13 @@ class AssetRepository(BaseRepository[Asset]):
             .first()
         )
 
+    def get_by_symbol_and_user(self, db: Session, symbol: str, user_id: int) -> Optional[Asset]:
+        return (
+            db.query(Asset)
+            .filter(Asset.symbol == symbol.upper(), Asset.user_id == user_id)
+            .first()
+        )
+
     def get_all_symbols(self, db: Session) -> List[str]:
         results = db.query(Asset.symbol).distinct().all()
         return [r.symbol for r in results]

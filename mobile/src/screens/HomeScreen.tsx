@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Alert,
   FlatList,
@@ -41,6 +42,14 @@ export default function HomeScreen({ navigation }: Props) {
     queryFn: () => quotesApi.getHighlight().then((r) => r.data),
     retry: false,
   });
+
+  // Sempre que o HomeScreen ganhar foco (ex: voltar do AssetDetail),
+  // revalida o highlight para refletir novos históricos gerados
+  useFocusEffect(
+    useCallback(() => {
+      queryClient.invalidateQueries({ queryKey: ['highlight'] });
+    }, [queryClient])
+  );
 
   const handleDelete = (asset: Asset) => {
     Alert.alert('Remover ativo', `Deseja remover ${asset.symbol} dos seus favoritos?`, [
@@ -138,7 +147,7 @@ export default function HomeScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <AssetCard
             asset={item}
-            isHighlight={item.id === highlight?.asset_id}
+            isHighlight={!!highlight && Number(item.id) === Number(highlight.asset_id)}
             onPress={() => navigation.navigate('AssetDetail', { asset: item })}
             onDelete={() => handleDelete(item)}
           />

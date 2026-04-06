@@ -21,13 +21,16 @@ export default function AssetCard({ asset, isHighlight, onPress, onDelete }: Ass
         {
           backgroundColor: colors.surface,
           borderColor: isHighlight ? colors.accent : colors.border,
-          borderWidth: isHighlight ? 1.5 : 1,
+          borderWidth: isHighlight ? 2 : 1,
         },
       ]}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <View style={[styles.symbolBadge, { backgroundColor: isHighlight ? colors.accent + '22' : colors.surfaceHigh }]}>
+      <View style={[
+        styles.symbolBadge,
+        { backgroundColor: isHighlight ? colors.accent + '33' : colors.surfaceHigh },
+      ]}>
         <Text style={[styles.symbolText, { color: isHighlight ? colors.accent : colors.text }]}>
           {asset.symbol}
         </Text>
@@ -37,17 +40,27 @@ export default function AssetCard({ asset, isHighlight, onPress, onDelete }: Ass
         <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
           {asset.name}
         </Text>
-        <Text style={[styles.date, { color: colors.textMuted }]}>
+
+        <View style={styles.metaRow}>
           {isHighlight && (
-            <Text style={{ color: colors.accent }}>★ Destaque  </Text>
+            <View style={[styles.starBadge, { backgroundColor: colors.accent }]}>
+              <Ionicons name="star" size={11} color="#fff" />
+              <Text style={styles.starText}>DESTAQUE</Text>
+            </View>
           )}
-          {new Date(asset.created_at).toLocaleDateString('pt-BR')}
-        </Text>
+          <Text style={[styles.date, { color: colors.textMuted }]}>
+            {new Date(asset.created_at).toLocaleDateString('pt-BR')}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.actions}>
         <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-        <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+        <TouchableOpacity
+          onPress={onDelete}
+          style={styles.deleteBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
           <Ionicons name="trash-outline" size={18} color={colors.danger} />
         </TouchableOpacity>
       </View>
@@ -73,7 +86,17 @@ const styles = StyleSheet.create({
   },
   symbolText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5 },
   info: { flex: 1 },
-  name: { fontSize: 15, fontWeight: '600', marginBottom: 4 },
+  name: { fontSize: 15, fontWeight: '600', marginBottom: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  starBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  starText: { fontSize: 10, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
   date: { fontSize: 12 },
   actions: { alignItems: 'center', gap: 8 },
   deleteBtn: { marginTop: 4 },
