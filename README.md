@@ -1,15 +1,21 @@
 # Finance App — Desafio Técnico Fullstack
 
-Aplicação para consulta de cotações de ativos financeiros, com backend em FastAPI, mobile em React Native (Expo) e banco de dados PostgreSQL.
+Aplicação mobile para consulta de cotações de ativos financeiros, com autenticação JWT, CRUD de favoritos, gráfico histórico de preços e destaque automático do melhor ativo do dia.
+
+---
 
 ## Sumário
 
 - [Visão geral](#visão-geral)
+- [Screenshots](#screenshots)
+- [Arquitetura](#arquitetura)
 - [Stack](#stack)
+- [Funcionalidades](#funcionalidades)
 - [Como subir com Docker (recomendado)](#como-subir-com-docker-recomendado)
 - [Como rodar o backend](#como-rodar-o-backend)
 - [Como rodar o mobile](#como-rodar-o-mobile)
 - [Como executar os testes](#como-executar-os-testes)
+- [Endpoints da API](#endpoints-da-api)
 - [Variáveis de ambiente](#variáveis-de-ambiente)
 - [Regra do ativo em destaque](#regra-do-ativo-em-destaque)
 - [Estratégia de atualização periódica](#estratégia-de-atualização-periódica)
@@ -20,11 +26,99 @@ Aplicação para consulta de cotações de ativos financeiros, com backend em Fa
 
 O app permite que o usuário:
 
-- Crie uma conta e faça login com JWT
+- Crie uma conta e faça login com JWT (token persistido localmente)
 - Cadastre ativos financeiros favoritos (ex: PETR4, VALE3)
-- Consulte a cotação atual de cada ativo via [brapi](https://brapi.dev)
-- Visualize um ativo em destaque baseado em uma regra de performance
-- Veja o histórico de preços de um ativo em gráfico
+- Consulte a cotação atual de cada ativo via [brapi.dev](https://brapi.dev)
+- Visualize um **ativo em destaque** com base na maior variação positiva do dia
+- Veja o **histórico de preços** de qualquer ativo em gráfico interativo
+- Alterne entre **dark mode e light mode**
+
+---
+
+## Screenshots
+
+### Login & Cadastro
+
+<table>
+  <tr>
+    <td align="center"><b>Dark Mode</b></td>
+    <td align="center"><b>Light Mode</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/login.png" width="320"/></td>
+    <td><img src="docs/screenshots/register.png" width="320"/></td>
+  </tr>
+</table>
+
+### Home — Lista de Ativos & Destaque
+
+<table>
+  <tr>
+    <td align="center"><b>Dark Mode</b></td>
+    <td align="center"><b>Light Mode</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/screen_darkmode.png" width="320"/></td>
+    <td><img src="docs/screenshots/screen_lightmode.png" width="320"/></td>
+  </tr>
+</table>
+
+### Detalhe do Ativo — Cotação & Gráfico Histórico
+
+<table>
+  <tr>
+    <td align="center"><b>Dark Mode</b></td>
+    <td align="center"><b>Light Mode</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/ativo_darkmode.png" width="320"/></td>
+    <td><img src="docs/screenshots/ativo_lightmode.png" width="320"/></td>
+  </tr>
+</table>
+
+---
+
+## Arquitetura
+
+```
+mobile-fullstack/
+├── back/                        # Backend Python + FastAPI
+│   └── app/
+│       ├── api/v1/endpoints/    # Controllers (auth, assets, quotes)
+│       ├── services/            # Regras de negócio
+│       ├── repositories/        # Acesso ao banco (padrão Repository)
+│       ├── models/              # SQLAlchemy ORM models
+│       ├── schemas/             # Pydantic schemas (request/response)
+│       ├── core/                # Config, segurança, scheduler
+│       └── tests/               # Testes automatizados (pytest)
+│
+├── mobile/                      # Mobile React Native + Expo
+│   └── src/
+│       ├── screens/             # Telas da aplicação
+│       ├── components/          # Componentes reutilizáveis
+│       ├── services/            # Comunicação com a API (axios)
+│       ├── store/               # Estado global (Zustand)
+│       ├── navigation/          # Pilha de navegação
+│       ├── context/             # ThemeContext (dark/light)
+│       └── theme/               # Paleta de cores
+│
+├── docker-compose.yml
+├── Makefile
+└── README.md
+```
+
+**Fluxo de dados:**
+
+```
+Mobile → API (JWT) → FastAPI → PostgreSQL
+                  ↘ brapi.dev (cotações externas)
+                  ↘ APScheduler (atualização periódica em background)
+```
+
+**Decisões de design:**
+- `QuoteService` recebe `BrapiService` por injeção de dependência, facilitando mocks nos testes
+- Padrão Repository isola o acesso ao banco das regras de negócio
+- Histórico de preços persiste no banco a cada consulta e a cada ciclo do scheduler — garantindo dados mesmo sem conexão com a brapi
 
 ---
 
@@ -32,10 +126,34 @@ O app permite que o usuário:
 
 | Camada | Tecnologia |
 |---|---|
-| Mobile | React Native + Expo (TypeScript) |
-| Backend | Python + FastAPI |
+| Mobile | React Native 0.81 + Expo 54 (TypeScript) |
+| Navegação | React Navigation v6 |
+| Estado | Zustand + React Query |
+| Backend | Python 3.12 + FastAPI 0.111 |
 | Banco de dados | PostgreSQL 16 |
+| ORM | SQLAlchemy 2.0 |
+| Autenticação | JWT (python-jose + passlib/bcrypt) |
+| HTTP Client (back) | httpx |
+| HTTP Client (mobile) | axios |
+| Scheduler | APScheduler 3.10 |
+| Gráfico | react-native-chart-kit |
 | Infraestrutura | Docker + docker-compose |
+| Testes | pytest + unittest.mock |
+
+---
+
+## Funcionalidades
+
+- **Autenticação** — cadastro, login e proteção de rotas via JWT
+- **CRUD de favoritos** — adicionar, listar, editar e remover ativos
+- **Prevenção de duplicatas** — mesmo símbolo não pode ser cadastrado duas vezes pelo mesmo usuário
+- **Cotação em tempo real** — consulta à brapi.dev com tratamento de erro
+- **Ativo em destaque** — calculado automaticamente com base na maior variação positiva do dia
+- **Histórico de preços** — exibido em gráfico de linha com bezier e suporte a até 30 registros
+- **Persistência do histórico** — salvo no banco a cada consulta, com fallback automático quando a brapi está indisponível
+- **Atualização periódica** — scheduler roda em background a cada 30 minutos
+- **Dark / Light mode** — alternância com persistência de preferência
+- **Pull-to-refresh** — atualização manual da lista de ativos
 
 ---
 
@@ -48,8 +166,6 @@ O app permite que o usuário:
 - Computador e dispositivo na **mesma rede Wi-Fi**
 
 ### 1. Configure o IP da sua máquina
-
-Descubra o IP local da sua máquina (adaptador Wi-Fi):
 
 ```bash
 # Windows
@@ -121,7 +237,7 @@ make backend
 
 A API ficará disponível em `http://localhost:8000`.
 
-Documentação interativa: `http://localhost:8000/docs`
+Documentação interativa (Swagger): `http://localhost:8000/docs`
 
 ### Localmente (sem Docker)
 
@@ -188,12 +304,45 @@ pytest app/tests -v
 
 Os testes cobrem:
 
-- Autenticação (registro, login, token inválido, rota protegida)
-- CRUD de ativos (criar, listar, buscar, atualizar, deletar, isolamento entre usuários)
-- Consulta de cotação (mock da brapi, persistência do histórico, erro de API externa)
-- Histórico de preços (brapi e fallback do banco)
-- Ativo em destaque (lógica do cálculo, endpoint)
-- Atualização periódica (chamada à brapi, deduplicação de símbolos)
+| Módulo | Cenários testados |
+|---|---|
+| Autenticação | Registro, login válido, senha errada, usuário inexistente, rota protegida sem token |
+| CRUD de ativos | Criar, listar, buscar por ID, atualizar nome/símbolo, deletar, duplicata (409), isolamento entre usuários |
+| Cotações | Consulta com mock da brapi, persistência automática do histórico, ativo não encontrado, erro da API externa |
+| Histórico | Retorno da brapi, fallback do banco quando brapi falha, histórico inexistente |
+| Destaque | Maior variação positiva, sem ativos, sem histórico, todos negativos retorna `None`, positivo prevalece sobre negativo |
+| Scheduler | Atualização chama brapi por símbolo, deduplicação (N usuários com mesmo símbolo = 1 chamada à API) |
+
+---
+
+## Endpoints da API
+
+Base URL: `http://localhost:8000/api/v1`
+
+### Autenticação
+
+| Método | Endpoint | Descrição | Auth |
+|---|---|---|---|
+| `POST` | `/auth/register` | Cadastra novo usuário | Não |
+| `POST` | `/auth/login` | Autentica e retorna JWT | Não |
+
+### Ativos Favoritos
+
+| Método | Endpoint | Descrição | Auth |
+|---|---|---|---|
+| `POST` | `/assets` | Cadastra ativo favorito | Sim |
+| `GET` | `/assets` | Lista todos os ativos do usuário | Sim |
+| `GET` | `/assets/{id}` | Busca ativo por ID | Sim |
+| `PUT` | `/assets/{id}` | Atualiza nome ou símbolo | Sim |
+| `DELETE` | `/assets/{id}` | Remove ativo | Sim |
+
+### Cotações
+
+| Método | Endpoint | Descrição | Auth |
+|---|---|---|---|
+| `GET` | `/quotes/{symbol}` | Cotação atual do ativo (via brapi) | Sim |
+| `GET` | `/quotes/highlight` | Ativo em destaque do usuário | Sim |
+| `GET` | `/quotes/{symbol}/history` | Histórico de preços | Sim |
 
 ---
 
@@ -216,7 +365,7 @@ Os testes cobrem:
 
 | Variável | Descrição | Exemplo |
 |---|---|---|
-| `HOST_IP` | IP local da máquina (Wi-Fi) para o mobile | `192.168.0.183` |
+| `HOST_IP` | IP local da máquina (Wi-Fi) para o mobile conectar ao backend | `192.168.0.183` |
 
 ### Mobile (`mobile/.env`)
 
@@ -230,27 +379,30 @@ Os testes cobrem:
 
 O **ativo em destaque** é aquele com a **maior variação percentual positiva** (`change_percent`) entre os ativos favoritos do usuário, com base no último registro de histórico de preços de cada ativo.
 
-**Critério de desempate:** se nenhum ativo tiver variação positiva, nenhum destaque é retornado.
-
-**Implementação:** `back/app/services/highlight_service.py`
-
 ```
-Destaque = max(change_percent) entre os últimos registros históricos dos ativos do usuário
+Destaque = max(change_percent > 0) entre os últimos registros históricos dos ativos do usuário
 ```
+
+**Critérios:**
+- Somente ativos com variação **positiva** são elegíveis
+- Se nenhum ativo tiver variação positiva no período, nenhum destaque é retornado
+- Em caso de dados ausentes (ativo sem histórico), o ativo é ignorado no cálculo
+
+**Implementação:** [back/app/services/highlight_service.py](back/app/services/highlight_service.py)
 
 ---
 
 ## Estratégia de atualização periódica
 
-O backend utiliza **APScheduler** com um `BackgroundScheduler` para atualizar as cotações de todos os ativos cadastrados em segundo plano.
+O backend utiliza **APScheduler** com um `BackgroundScheduler` para atualizar as cotações de todos os ativos cadastrados em segundo plano, sem bloquear as requisições da API.
 
 **Como funciona:**
 
-1. A cada `SCHEDULER_INTERVAL_MINUTES` minutos (padrão: 30), o job `refresh_assets` é executado
-2. O job busca todos os símbolos distintos cadastrados no banco (deduplicados entre usuários)
+1. A cada `SCHEDULER_INTERVAL_MINUTES` minutos (padrão: **30 min**), o job `refresh_assets` é executado automaticamente
+2. O job busca todos os símbolos distintos cadastrados no banco (**deduplicados entre usuários**)
 3. Para cada símbolo, consulta a brapi e persiste um novo registro em `price_history`
 4. Ativos de diferentes usuários com o mesmo símbolo recebem registros individuais de histórico
 
-**Vantagem da deduplicação:** se 10 usuários têm PETR4, a brapi é consultada apenas 1 vez por ciclo.
+**Vantagem da deduplicação:** se 10 usuários têm PETR4, a brapi é consultada apenas **1 vez** por ciclo, mas os 10 usuários recebem o histórico atualizado.
 
-**Implementação:** `back/app/core/scheduler.py` + `back/app/services/quote_service.py` (`refresh_all_assets`)
+**Implementação:** [back/app/core/scheduler.py](back/app/core/scheduler.py) + [back/app/services/quote_service.py](back/app/services/quote_service.py)
