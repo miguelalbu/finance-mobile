@@ -27,6 +27,10 @@ class HighlightService:
             if latest is None or latest.change_percent is None:
                 continue
 
+            # Só considera ativos com variação positiva
+            if latest.change_percent <= 0:
+                continue
+
             if best_change is None or latest.change_percent > best_change:
                 best_change = latest.change_percent
                 best = HighlightResponse(

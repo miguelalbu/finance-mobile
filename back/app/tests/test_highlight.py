@@ -58,6 +58,26 @@ def test_highlight_no_history_returns_none(db: Session):
     assert result is None
 
 
+def test_highlight_all_negative_returns_none(db: Session):
+    user = User(email="h4@test.com", hashed_password=hash_password("123"))
+    db.add(user)
+    db.commit()
+
+    asset1 = Asset(symbol="BBAS3", name="Banco do Brasil", user_id=user.id)
+    asset2 = Asset(symbol="MGLU3", name="Magazine Luiza", user_id=user.id)
+    db.add_all([asset1, asset2])
+    db.commit()
+
+    db.add(PriceHistory(asset_id=asset1.id, symbol="BBAS3", price=50.00, change_percent=-0.50, fetched_at=datetime.now(timezone.utc)))
+    db.add(PriceHistory(asset_id=asset2.id, symbol="MGLU3", price=10.00, change_percent=-1.50, fetched_at=datetime.now(timezone.utc)))
+    db.commit()
+
+    service = HighlightService()
+    result = service.get_highlight(db, [asset1, asset2])
+
+    assert result is None
+
+
 def test_highlight_ignores_negative_if_positive_exists(db: Session):
     user = User(email="h3@test.com", hashed_password=hash_password("123"))
     db.add(user)
